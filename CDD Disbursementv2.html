@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CDD Fund Calculator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f8fafc;
+      color: #1f2937;
+    }
+
+    .navbar {
+      background-color: #0f172a;
+      color: #f8fafc;
+      padding: 15px 30px;
+      font-size: 1.5rem;
+      font-weight: bold;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .container {
+      display: flex;
+      flex-direction: row;
+    }
+
+    .form-section {
+      width: 50%;
+      padding: 40px;
+      box-sizing: border-box;
+      background-color: #f8fafc;
+      display: flex;
+      justify-content: center;
+    }
+
+    .form-card {
+      width: 100%;
+      max-width: 500px;
+      background: white;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    }
+
+    .form-card label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+
+    .form-card input,
+    .form-card select {
+      width: 100%;
+      padding: 12px 14px;
+      margin-bottom: 20px;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      font-size: 1rem;
+      background-color: #f9fafb;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .form-card input:focus,
+    .form-card select:focus {
+      border-color: #2563eb;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+    }
+
+    .form-card button {
+      width: 100%;
+      padding: 12px;
+      font-size: 1rem;
+      background-color: #1d4ed8;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .form-card button:hover {
+      background-color: #2563eb;
+    }
+
+    .result-box {
+      margin-top: 20px;
+      background-color: #f1f5f9;
+      padding: 15px;
+      border-radius: 10px;
+      font-weight: bold;
+      font-size: 1.1rem;
+      color: #1e3a8a;
+      text-align: center;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .table-section {
+      width: 50%;
+      padding: 30px;
+      box-sizing: border-box;
+      background-color: #1e293b;
+      color: #f8fafc;
+    }
+
+    h2 {
+      color: #f8fafc;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      border: 1px solid #334155;
+      padding: 10px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #334155;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">CDD Fund Calculator</nav>
+
+  <div class="container">
+    <div class="form-section">
+      <div class="form-card">
+        <label>Category:
+          <select id="category" onchange="updateTable()">
+            <option value="Living">Living</option>
+            <option value="Medical - Consumables">Medical - Consumables</option>
+            <option value="Medical - Other">Medical - Other</option>
+            <option value="Medical - Transport">Medical - Transport</option>
+            <option value="Medical - Dialysis">Medical - Dialysis</option>
+            <option value="Other Support">Other Support</option>
+            <option value="Special Cases">Special Cases</option>
+            <option value="Education">Education</option>
+          </select>
+        </label>
+
+        <label>Age:</label>
+        <input type="number" id="age" />
+
+        <label>Per Capita Income (PCI):</label>
+        <input type="number" id="pci" />
+
+        <label>Savings:</label>
+        <input type="number" id="savings" />
+
+        <label>Income - Expense Gap:</label>
+        <input type="number" id="ie_gap" />
+
+        <label>Occupation:</label>
+        <input type="text" id="occupation" />
+
+        <label>Housing Type:</label>
+        <input type="text" id="housing" />
+
+        <label>Household Size:</label>
+        <input type="number" id="household" />
+
+        <label>Special Condition:</label>
+        <input type="text" id="special" />
+
+        <button onclick="calculateAssistance()">Calculate Assistance</button>
+
+        <div class="result-box" id="resultBox">Enter details and click calculate</div>
+      </div>
+    </div>
+
+    <div class="table-section">
+      <h2>📊 Table Weight Demonstration</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Factor</th>
+            <th>Weight</th>
+            <th>Cluster Info</th>
+          </tr>
+        </thead>
+        <tbody id="weightTable">
+          <!-- Populated by JS -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const clusterData = {
+      "Living": {
+        "Age": ["Medium", "45–65"],
+        "PCI": ["High", "< $500"],
+        "Savings": ["High", "< $2K"],
+        "I&E Gap": ["High", "-300 to 1000"],
+        "Occupation": ["Medium", "Unemployed"],
+        "Housing Type": ["Medium", "HDB 1–3 Room, Rental"],
+        "Household Size": ["Low", "Varied"],
+        "Special Condition": ["Low", "None"]
+      },
+      "Medical - Consumables": {
+        "Age": ["High", "60+"],
+        "PCI": ["High", "500–1200"],
+        "Savings": ["Medium", "Up to $5K"],
+        "I&E Gap": ["Low", "Close to zero"],
+        "Occupation": ["High", "Retired"],
+        "Housing Type": ["Low", "HDB 3–4 Room"],
+        "Household Size": ["Low", "Varied"],
+        "Special Condition": ["Low", "None"]
+      },
+      "Medical - Other": {
+        "Age": ["High", "55–75"],
+        "PCI": ["High", "500–1500"],
+        "Savings": ["Medium", "Mixed"],
+        "I&E Gap": ["Medium", "Varied"],
+        "Occupation": ["High", "Unemployed"],
+        "Housing Type": ["Low", "Mixed incl. Private"],
+        "Household Size": ["Low", "Varied"],
+        "Special Condition": ["Medium", "Some"]
+      },
+      "Medical - Transport": {
+        "Age": ["High", "60–70"],
+        "PCI": ["High", "600–1300"],
+        "Savings": ["Medium", "< 3K–6K"],
+        "I&E Gap": ["Medium", "Balanced or +ve"],
+        "Occupation": ["High", "Retired"],
+        "Housing Type": ["Medium", "HDB 4 Room, Exec"],
+        "Household Size": ["Low", "Varied"],
+        "Special Condition": ["Low", "None"]
+      },
+      "Medical - Dialysis": {
+        "Age": ["High", "65–80"],
+        "PCI": ["High", "< $1500"],
+        "Savings": ["Medium", "Wide, incl. high"],
+        "I&E Gap": ["Medium", "+ve to neutral"],
+        "Occupation": ["High", "Retired"],
+        "Housing Type": ["Medium", "HDB 3–5 Room"],
+        "Household Size": ["Medium", "Varied"],
+        "Special Condition": ["High", "Terminal/HIV"]
+      },
+      "Other Support": {
+        "Age": ["Low", "30–60"],
+        "PCI": ["Medium", "Varied"],
+        "Savings": ["Medium", "Low–Mid"],
+        "I&E Gap": ["High", "Mixed"],
+        "Occupation": ["High", "Unemployed"],
+        "Housing Type": ["High", "Rental & Mixed"],
+        "Household Size": ["Medium", "Varied"],
+        "Special Condition": ["Medium", "Some"]
+      },
+      "Special Cases": {
+        "Age": ["Medium", "Varied"],
+        "PCI": ["Medium", "Varied"],
+        "Savings": ["Medium", "Any"],
+        "I&E Gap": ["Medium", "Highly variable"],
+        "Occupation": ["High", "Unemployed"],
+        "Housing Type": ["Medium", "All types"],
+        "Household Size": ["Low", "Varied"],
+        "Special Condition": ["High", "Terminal/HIV"]
+      },
+      "Education": {
+        "Age": ["High", "Below 25"],
+        "PCI": ["High", "< $500"],
+        "Savings": ["High", "< $1K"],
+        "I&E Gap": ["High", "-300 to 900"],
+        "Occupation": ["High", "Student"],
+        "Housing Type": ["Medium", "HDB 1–3 Room, Rental"],
+        "Household Size": ["Medium", "Varied"],
+        "Special Condition": ["Low", "None"]
+      }
+    };
+
+    function updateTable() {
+      const selectedCategory = document.getElementById("category").value;
+      const factors = Object.entries(clusterData[selectedCategory]);
+      const tbody = document.getElementById("weightTable");
+      tbody.innerHTML = "";
+
+      for (const [factor, [weight, cluster]] of factors) {
+        const row = `<tr><td>${factor}</td><td>${weight}</td><td>${cluster}</td></tr>`;
+        tbody.innerHTML += row;
+      }
+    }
+
+    window.onload = updateTable;
+
+    function calculateAssistance() {
+      const category = document.getElementById("category").value;
+      const data = clusterData[category];
+
+      const inputs = {
+        "Age": parseInt(document.getElementById("age").value),
+        "PCI": parseFloat(document.getElementById("pci").value),
+        "Savings": parseFloat(document.getElementById("savings").value),
+        "I&E Gap": parseFloat(document.getElementById("ie_gap").value),
+        "Occupation": document.getElementById("occupation").value.toLowerCase(),
+        "Housing Type": document.getElementById("housing").value.toLowerCase(),
+        "Household Size": parseInt(document.getElementById("household").value),
+        "Special Condition": document.getElementById("special").value.toLowerCase()
+      };
+
+      let score = 0;
+
+      for (const [factor, [weight, clusterDesc]] of Object.entries(data)) {
+        let matched = false;
+
+        if (factor === "Age") {
+          const val = inputs["Age"];
+          if (clusterDesc.includes("Below") && val < 25) matched = true;
+          else if (clusterDesc.includes("+") && val >= parseInt(clusterDesc)) matched = true;
+          else if (clusterDesc.includes("-") || clusterDesc.includes("–")) {
+            const [min, max] = clusterDesc.replace("–", "-").split("-").map(Number);
+            if (val >= min && val <= max) matched = true;
+          }
+        } else if (["PCI", "Savings"].includes(factor)) {
+          const val = inputs[factor];
+          if (clusterDesc.includes("<") && val < parseInt(clusterDesc.replace(/\D/g, ""))) matched = true;
+          else if (clusterDesc.includes("Up to")) {
+            const max = parseInt(clusterDesc.replace(/\D/g, ""));
+            if (val <= max) matched = true;
+          } else if (clusterDesc.includes("-") || clusterDesc.includes("–")) {
+            const [min, max] = clusterDesc.replace("–", "-").split("-").map(x => parseInt(x.replace(/\D/g, "")));
+            if (val >= min && val <= max) matched = true;
+          }
+        } else if (factor === "I&E Gap") {
+          const val = inputs["I&E Gap"];
+          if (clusterDesc.includes("zero") && Math.abs(val) < 100) matched = true;
+          else if (clusterDesc.includes("-") || clusterDesc.includes("–")) {
+            const [min, max] = clusterDesc.replace("–", "-").split("-").map(Number);
+            if (val >= min && val <= max) matched = true;
+          } else if (clusterDesc.includes("+ve") && val >= 0) matched = true;
+        } else if (["Occupation", "Housing Type", "Special Condition"].includes(factor)) {
+          if (inputs[factor].includes(clusterDesc.toLowerCase())) matched = true;
+        }
+
+        const weightScore = weight === "High" ? 2 : weight === "Medium" ? 1 : 0.5;
+        if (matched) score += weightScore;
+      }
+
+      let result = "";
+      if (score >= 9) result = "High Tier Support ($600)";
+      else if (score >= 5) result = "Medium Tier Support ($400)";
+      else result = "Basic Tier Support ($200)";
+
+      document.getElementById("resultBox").innerText = `Match Score: ${score.toFixed(1)} → ${result}`;
+    }
+  </script>
+</body>
+</html>
